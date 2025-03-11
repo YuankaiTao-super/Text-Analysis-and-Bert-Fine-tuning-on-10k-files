@@ -1,0 +1,436 @@
+import spacy
+import os
+from spacy.matcher import Matcher
+from spacy.matcher import PhraseMatcher
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import date # 用于处理日期
+from dateutil.relativedelta import relativedelta # 用于处理日期
+import fitz  # PyMuPDF于解析 PDF
+import pdfplumber  # 用于解析 PDF
+from transformers import pipeline  # Hugging Face NLP 模型
+import random # 用于生成随机数
+
+def getFilelist(foldername):
+    filelist = []
+
+    for dirname, _, filenames in os.walk(foldername):
+        for filename in filenames:
+            filelist.append(os.path.join(dirname, filename))
+
+    return filelist
+# 读取文件夹下所有文件名
+
+def createfolder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)  
+# 创建文件夹
+
+report_company = 'Fluence Energy'
+report_ticker = 'FLNC'
+report_years = ['2022','2023','2024']
+
+if False:
+    ticker_info = yf.Ticker(report_ticker)
+    esg_data = pd.DataFrame(ticker_info.sustainability)
+    esg_data.columns = [str(ticker_info.ticker)]
+
+    esg_data.loc[['totalEsg','socialScore','governanceScore','environmentScore',
+                'esgPerformance','percentile','peerGroup','highestControversy'],:]
+                esg_data = esg_data.T
+                esg_data
+                try:
+                    esg_data = esg_data.T
+                    display(esg_data)
+                except Exception as e:
+                    print(f"An error occurred: {e}")
+
+if False:
+    # 获取ESG数据
+    esg_data = pd.DataFrame(ticker_info.sustainability)
+    esg_data.columns = [str(ticker_info.ticker)]
+
+    # 选择感兴趣的ESG指标
+    esg_data = esg_data.loc[['totalEsg','socialScore','governanceScore','environmentScore',
+                            'esgPerformance','percentile','peerGroup','highestControversy'], :]
+
+    # 转置数据框
+    esg_data = esg_data.T
+
+    # 显示ESG数据
+    try:
+        display(esg_data)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+def extract_pdf(file, verbose=False):
+    
+    if verbose:
+        print('Processing {}'.format(file))
+
+    try:
+        resource_manager = PDFResourceManager()
+        fake_file_handle = io.StringIO()
+        codec = 'utf-8'
+        laparams = LAParams()
+
+        converter = TextConverter(resource_manager, fake_file_handle, codec=codec, laparams=laparams)
+        page_interpreter = PDFPageInterpreter(resource_manager, converter)
+        
+        password = ""
+        maxpages = 0
+        caching = True
+        pagenos = set()
+
+        content = []
+
+        with open(file, 'rb') as fh:
+            for page in PDFPage.get_pages(fh,
+                                          pagenos, 
+                                          maxpages=maxpages,
+                                          password=password,
+                                          caching=True,
+                                          check_extractable=False):
+
+                page_interpreter.process_page(page)
+
+                content.append(fake_file_handle.getvalue())
+
+                fake_file_handle.truncate(0)
+                fake_file_handle.seek(0)        
+
+        text = '##PAGE_BREAK##'.join(content)
+
+        # close open handles
+        converter.close()
+        fake_file_handle.close()
+        
+        return text
+
+    except Exception as e:
+        print(e)
+
+        # close open handles
+        converter.close()
+        fake_file_handle.close()
+
+        return ""
+    
+# Gensim
+import gensim
+import gensim.corpora as corpora
+from gensim.utils import simple_preprocess
+from gensim.models import CoherenceModel
+
+# Plotting tools
+import pyLDAvis
+import pyLDAvis.gensim  # don't skip this
+
+# PDF text extraction
+from pdfminer3.layout import LAParams, LTTextBox
+from pdfminer3.pdfpage import PDFPage
+from pdfminer3.pdfinterp import PDFResourceManager
+from pdfminer3.pdfinterp import PDFPageInterpreter
+from pdfminer3.converter import PDFPageAggregator
+from pdfminer3.converter import TextConverter
+
+# Enable logging for gensim - optional
+import logging
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.ERROR)
+
+# Others
+import requests
+import io
+import string
+import re
+from pprint import pprint
+from tqdm.notebook import tqdm
+import io
+import json
+
+# 赋值pdf文件
+pdf_files = ['2022.Sep.pdf', '2023.Sep.pdf', '2024.Sep.pdf']
+pdf_texts = {}
+
+for pdf_file in pdf_files:
+    file_path = f"C:\\Users\\Kevin\\OneDrive\\Desktop\\MQF学习资料\\files of lessons\\winter quarter\\MGTF 423\\final projects\\10-ks\\{pdf_file}"
+    pdf_texts[pdf_file] = extract_pdf(file_path, verbose=True)
+
+print(pdf_texts['2022.Sep.pdf'][:1000])
+
+import json
+
+DATA_FOLDER = '../data/'
+PDF_FOLDER = '../pdf/'
+createfolder(DATA_FOLDER)
+createfolder(PDF_FOLDER)
+
+
+for year in report_years:
+    report = {'company': report_company, 'year': year, 'ticker': report_ticker, 'content': pdf_texts[f'{year}.Sep.pdf']}
+    with open(DATA_FOLDER + report_company + year + '.json', "w") as outfile:  
+        json.dump(report, outfile)  # 将2022，2023，2024年的10-ks字典写入json文件
+
+
+for year in report_years:
+    with open(DATA_FOLDER + report_company + year + '.json') as inputfile:
+        report[year] = json.load(inputfile)
+        print(f"report['{year}'] has been loaded from the json file")
+
+
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
+
+import spacy
+spacy.cli.download("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm", disable=['ner'])
+
+# NLTK Stop words
+from nltk.corpus import stopwords
+stop_words = stopwords.words('english')
+
+from sklearn.feature_extraction import text
+stop_words = text.ENGLISH_STOP_WORDS.union(stop_words)
+
+', '.join(stop_words)
+
+def remove_non_ascii(text):
+    printable = set(string.printable)
+    return ''.join(filter(lambda x: x in printable, text))
+# 保留可打印字符
+
+def not_header(line):
+    # as we're consolidating broken lines into paragraphs, we want to make sure not to include headers
+    return not line.isupper()
+# 不包括大写字母
+
+def extract_sentences(nlp, text):
+    """
+    Extracting ESG statements from raw text by removing junk, URLs, etc.
+    We group consecutive lines into paragraphs and use spacy to parse sentences.
+    """
+    MIN_WORDS_PER_PAGE = 500
+ # 每页最少500个单词（将封面或者大面积图像的页面剔除）   
+    pages = text.split('##PAGE_BREAK##')
+#     print('Number of Pages: {}'.format(len(pages)))
+
+    lines = []
+    for page in pages:
+        
+        # remove non ASCII characters
+        text = remove_non_ascii(page)
+        
+        if len(text.split(' ')) < MIN_WORDS_PER_PAGE:
+#             print('Skipped Page: {}'.format(len(text.split(' '))))
+            continue
+        
+        prev = ""
+        # aggregate consecutive lines where text may be broken down
+        for line in text.split('\n\n'):
+            # aggregate consecutive lines where text may be broken down
+            # only if next line starts with a space or previous does not end with dot.
+            if(line.startswith(' ') or not prev.endswith('.')):
+                prev = prev + ' ' + line
+            else:
+                # new paragraph
+                lines.append(prev)
+                prev = line
+
+        # don't forget left-over paragraph
+        lines.append(prev)
+        lines.append('##SAME_PAGE##')
+        
+    lines = '  '.join(lines).split('##SAME_PAGE##')
+    
+    # clean paragraphs from extra space, unwanted characters, urls, etc.
+    # best effort clean up, consider a more versatile cleaner
+    
+    sentences = []
+    pages_content = []
+
+    for line in lines[:-1]:
+        # removing header number
+        line = re.sub(r'^\s?\d+(.*)$', r'\1', line)
+        # removing trailing spaces
+        line = line.strip()
+        # words may be split between lines, ensure we link them back together
+        line = re.sub(r'\s?-\s?', '-', line)
+        # remove space prior to punctuation
+        line = re.sub(r'\s?([,:;\.])', r'\1', line)
+        # ESG contains a lot of figures that are not relevant to grammatical structure
+        line = re.sub(r'\d{5,}', r' ', line)
+        # remove emails
+        line = re.sub(r'\S*@\S*\s?', '', line)
+        # remove mentions of URLs
+        line = re.sub(r'((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*', r' ', line)
+        # remove multiple spaces
+        line = re.sub(r'\s+', ' ', line)
+        # join next line with space
+        line = re.sub(r' \n', ' ', line)
+        line = re.sub(r'.\n', '. ', line)
+        line = re.sub(r'\x0c', ' ', line)
+        
+        pages_content.append(str(line).strip())
+
+        # split paragraphs into well defined sentences using spacy
+        for part in list(nlp(line).sents):
+            sentences.append(str(part).strip())
+
+#           sentences += nltk.sent_tokenize(line)
+            
+    # Only interested in full sentences and sentences with 10 to 100 words.
+    sentences = [s for s in sentences if re.match('^[A-Z][^?!.]*[?.!]$', s) is not None]
+    sentences = [s.replace('\n', ' ') for s in sentences]
+    sentences = [s for s in sentences if (len(s.split(' ')) > 10) & (len(s.split(' ')) < 100)]
+
+    return pages_content, sentences
+
+for year in report_years:
+    pages, sentences = extract_sentences(nlp, report[year]['content'])
+    globals()[f'report_{year}_pages'] = pages
+    globals()[f'report_{year}_sentences'] = sentences
+
+# test if the function works
+report_2022_sentences[:100]
+# report_2023_sentences[:100]
+# report_2024_sentences[:100]
+
+# test if the function works
+report_2022_pages[:100]
+# report_2023_pages[:100]
+# report_2024_pages[:100]
+
+def run_NLP(content):
+
+    def sent_to_words(sentences):
+        for sentence in sentences:
+            yield(gensim.utils.simple_preprocess(str(sentence), deacc=True))  # deacc=True removes punctuations
+
+    # Define functions for stopwords, bigrams, trigrams and lemmatization
+    def remove_stopwords(texts):
+        return [[word for word in simple_preprocess(str(doc)) if word not in stop_words] for doc in texts]
+
+    def make_bigrams(texts):
+        return [bigram_mod[doc] for doc in texts]
+
+    def make_trigrams(texts):
+        return [trigram_mod[bigram_mod[doc]] for doc in texts]
+
+    def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
+        """https://spacy.io/api/annotation"""
+        texts_out = []
+        for sent in texts:
+            doc = nlp(" ".join(sent)) 
+            texts_out.append([token.lemma_ for token in doc if token.pos_ in allowed_postags])
+        return texts_out
+
+    data_words = list(sent_to_words(content))
+
+    # Build the bigram and trigram models
+    bigram = gensim.models.Phrases(data_words, min_count=5, threshold=100) # higher threshold fewer phrases.
+    trigram = gensim.models.Phrases(bigram[data_words], threshold=100)  
+
+    # Faster way to get a sentence clubbed as a trigram/bigram
+    bigram_mod = gensim.models.phrases.Phraser(bigram)
+    trigram_mod = gensim.models.phrases.Phraser(trigram)
+
+    # Remove Stop Words
+    data_words_nostops = remove_stopwords(data_words)
+
+    # Form Bigrams
+    data_words_bigrams = make_bigrams(data_words_nostops)
+
+    # Do lemmatization keeping only noun, adj, vb, adv
+    data_lemmatized = lemmatization(data_words_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
+    
+    return data_lemmatized
+
+data_lemmatized = {}
+report_sentences_lemma = {}
+
+for year in report_years:
+    data_lemmatized[year] = run_NLP(globals()[f'report_{year}_pages'])
+    report_sentences_lemma[year] = [' '.join(w) for w in data_lemmatized[year]]
+    print(report_sentences_lemma[year][random.randint(0, len(report_sentences_lemma[year]))])
+
+fsi_stop_words = [ 'plc', 'INC', 'LLC', 'group', 'target',
+  'track', 'capital', 'holding',
+  'report', 'annualreport',
+  'esg', 'bank', 'report',
+  'annualreport', 'long', 'make', 'disclosure', 'include', 'company'
+  ]
+# financial services industry 常见停用词added
+
+fsi_stop_words.append(report_company)
+fsi_stop_words.append('Fluence')
+fsi_stop_words.append('fluence')
+# 停用词添加公司名称和公司简称
+stop_words = stop_words.union(fsi_stop_words)
+# 添加停用词
+
+from wordcloud import WordCloud
+# Create a WordCloud object
+
+# Create a dictionary to map years to the corresponding variables
+for year in report_years:
+    # aggregate all records into one large string to run wordcloud on term frequency
+    large_string = ' '.join(report_sentences_lemma[year])
+
+    # use 3rd party lib to compute term freq., apply stop words
+    word_cloud = WordCloud(
+        background_color="white",
+        max_words=5000, 
+        width=1500, 
+        height=1000, 
+        stopwords=stop_words, 
+        contour_width=3, 
+        contour_color='steelblue'
+    )
+
+    # display our wordcloud across all records
+    plt.figure(figsize=(16,16))
+    word_cloud.generate(large_string)
+    plt.imshow(word_cloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.show()
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+for year in report_years:
+    # Run bi-gram TF-IDF frequencies
+    bigram_tf_idf_vectorizer = TfidfVectorizer(stop_words=stop_words, ngram_range=(1,2), min_df=10, use_idf=True)
+    bigram_tf_idf = bigram_tf_idf_vectorizer.fit_transform(report_sentences_lemma[year])
+
+    # Extract bi-grams names
+    words = bigram_tf_idf_vectorizer.get_feature_names()
+
+    # extract our top 10 ngrams
+    total_counts = np.zeros(len(words))
+    for t in bigram_tf_idf:
+        total_counts += t.toarray()[0]
+
+    count_dict = (zip(words, total_counts))
+    count_dict = sorted(count_dict, key=lambda x:x[1], reverse=True)[0:30]
+    words = [w[0] for w in count_dict]
+    counts = [w[1] for w in count_dict]
+    x_pos = np.arange(len(words)) 
+
+    # Plot top 10 ngrams
+    plt.figure(figsize=(16, 6))
+    plt.subplot(title=f'30 most common uni-gram and bi-grams for {year}')
+    sns.barplot(x_pos, counts, palette='Greens_r')
+    plt.xticks(x_pos, words, rotation=90) 
+    plt.xlabel('N-grams')
+    plt.ylabel('tfidf')
+    plt.show()
+
+Evaluaton Metrics
+1. **Perplexity**: Captures how surprised a model is of new data it has not seen before, and is measured as the normalized log-likelihood of a held-out test set.  Lower the better.
+2. **Coherence Score**: Measures score a single topic by measuring the degree of semantic similarity between high scoring words in the topic.  Higher the better.
+
+In the analysis, the model with the highest coherence score is selected as the optimal model.
