@@ -1,4 +1,4 @@
-# 24Fall-495 Course Final Project
+# 24Fall- MGTF495 Course Final Project
 @ May/22/2025, coded by Yuankai Tao, Xinping Qu
 
 ## This repository contains the code for the final project of the MGTF 495 course. It includes the following components:
