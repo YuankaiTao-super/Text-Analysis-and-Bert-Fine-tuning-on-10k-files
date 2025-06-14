@@ -1,7 +1,7 @@
-# 24Fall-423 Course Final Project
-@ March/22/2025, coded by Zheyu Zhen, Xinping Qu, Shuyu Zhang and Yuankai Tao
+# 24Fall-495 Course Final Project
+@ May/22/2025, coded by Yuankai Tao, Xinping Qu
 
-## This repository contains the code for the final project of the 24Fall 423 course. It includes the following components:
+## This repository contains the code for the final project of the MGTF 495 course. It includes the following components:
 
 Main Code: The core code for processing and analyzing the data, also includes the code might engaged in the future work(bert training part)
 
