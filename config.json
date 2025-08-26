@@ -1,0 +1,15 @@
+{
+  "model_name": "bert-base-uncased",
+  "sample_ratio": 0.0005,
+  "device": "cuda or cpu",
+  "epochs": 5,
+  "learning_rate": 1e-5,
+  "batch_size": 32,
+  "max_length": 512,
+  "dropout": 0.2,
+  "fc1_in_features": 768,
+  "fc1_out_features": 256,
+  "fc2_in_features": 256,
+  "fc2_out_features": 2,
+  "optimizer": "AdamW"
+}
