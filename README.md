@@ -7,7 +7,7 @@ Welcome to the code repository for the UCSD - MGTF 495 course final project. Thi
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 This repository contains several key components to help you quickly understand and reproduce our work:
 
@@ -20,7 +20,7 @@ This repository contains several key components to help you quickly understand a
 
 ---
 
-## 📊 Part 1: Exploratory Text Analysis
+## Part 1: Exploratory Text Analysis
 
 The core objective of this section is to preprocess and clean the raw text data, and then perform an exploratory analysis on 10k reports downloaded from SEC, for Fluence Energy, Inc. to uncover potential patterns and topics(or themes).
 
@@ -30,7 +30,7 @@ The core objective of this section is to preprocess and clean the raw text data,
 2.  **Data Analysis and Visualization**: Generating descriptive statistical charts and maps to analyze text features.
 3.  **Interactive Topic Exploration**: Building a standalone web application to interactively explore and analyze the results of the LDA model.
 
-## 🤖 Part 2: Model Training (BERT Fine-tuning)
+## Part 2: Model Training (BERT Fine-tuning)
 
 This section details the experimental design for BERT model fine-tuning, which is considered a in-progress research for this project. We fine-tuned a pre-trained BERT model on a specific dataset to accomplish a particular task.
 
@@ -52,7 +52,7 @@ config = {
     "train_batch_size": 32,         # Training Batch Size
     "eval_batch_size": 32,          # Evaluation Batch Size
     "num_train_epochs": 5,          # Number of Training Epochs
-    "frozen_layers": [             # Freeze the last two layers of the BERT model
+    "frozen_layers": [              # Freeze the last two layers of the BERT model
         "bert.encoder.layer.10",
         "bert.encoder.layer.11"
     ]
