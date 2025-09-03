@@ -2,6 +2,9 @@
 
 ![Course](https://img.shields.io/badge/Course-MGTF%20423-blue.svg)
 ![Status](https://img.shields.io/badge/Status-Completed-green.svg)
+![Data](https://img.shields.io/badge/Data-Text-blue?style=flat-square)
+![Models](https://img.shields.io/badge/Models-FinBert-purple?style=flat-square)
+
 
 Welcome to the code repository for the UCSD - MGTF 423 Data Science for Finance course final project. This project aims to conduct an small - scale but in-depth exploratory analysis of the given text data(10k reports for Fluence Energy, Inc. from Y2022-Y2024) and also try to explore BERT model fine-tuning based on the datasets on a relevant large amount of text strings extracted from 10k files(SEC), loaded from Huggingface
 
